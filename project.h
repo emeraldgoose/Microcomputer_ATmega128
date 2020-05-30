@@ -150,6 +150,7 @@ void game_manual() {
 	txd_string("Game Command\n\r");
 	txd_string("SW 1 : UP\n\r");
 	txd_string("SW 2 : DOWN\n\r");
+	txd_string("SW 3 : Restart\n\r");
 	txd_string("SW 4 : END GAME\n\r");
 }
 
@@ -173,9 +174,22 @@ void make_map() {
 }
 
 void delay_level(int level) {
-	for(int i=0;i<6-level;i++) _delay_ms(150);
+	for(int i=0;i<(6-level)*100;i++)  {
+		switch(i%4) {
+			case 3:
+			PORTB|=0x0f; PORTA=FND[0]; PORTB&=0xf7; break;
+			case 2:
+			PORTB|=0x0f; PORTA=FND[1]; PORTB&=0xfb; break;
+			case 1:
+			PORTB|=0x0f; PORTA=FND[2]; PORTB&=0xfd; break;
+			case 0:
+			PORTB|=0x0f; PORTA=FND[3]; PORTB&=0xfe; break;
+			default: break;
+		}
+		_delay_ms(1);
+	}
 }
 
-void honor() { // hall of fame
+void ranking() { // hall of fame
 	
 }

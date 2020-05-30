@@ -124,10 +124,11 @@ int main(void)
 		else if(flag==3) {
 			game_manual();
 			game_loading();
-			int death=0, score=0, level=1; // game setting
-			int user_pos=1;
+			int death=0, score=0, level=1; // init
+			int user_pos, SW=1;
 			make_map();
 			while(1) {
+				char smg[16];
 				for(int i=0;i<50;i++) ob[i].y-=1;
 				user_pos=SW;
 				
@@ -135,7 +136,17 @@ int main(void)
 					flag=0; SW=1; break;
 				}
 				
-				if(score==50 && level<6) level++, score=0, make_map();
+				if(score==50 && level<6) {
+					level++;
+					if(level<=5) {
+						score=0, make_map();
+						lcd_display_clear();
+						lcd_display_position(1,1);
+						sprintf(smg,"Stage %d",level);
+						lcd_string(smg);
+						_delay_ms(50);
+					}
+				}
 				else if(score==50 && level==6) {
 					lcd_display_clear();
 					lcd_display_position(1,1);
@@ -149,11 +160,13 @@ int main(void)
 				}
 				
 				if(death==1) {
-					char smg[16];
 					lcd_display_position(1,1); lcd_string("Game Over");
 					lcd_display_position(2,1); sprintf(smg,"Score : %d",score+50*(level-1)); lcd_string(smg);
 					if(SW==4) {
 						flag=0; SW=1; break;
+					}
+					else if(SW==3) {
+						death=0; score=0; level=1; user_pos=1; make_map();
 					}
 					else continue;
 				}
@@ -175,8 +188,12 @@ int main(void)
 					lcd_string(">");
 				}
 				
-				delay_level(level);
-				
+				// level & FND display
+				FND[0]=SEG[level];
+				FND[1]=SEG[(score+50*(level-1))/100];
+				FND[2]=SEG[((score+50*(level-1))/10)%10];
+				FND[3]=SEG[(score+50*(level-1))%10];
+				delay_level(level); 
 			}
 		}
 	}
