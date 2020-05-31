@@ -119,13 +119,18 @@ int main(void)
 				txd_string("   ");
 				txd_string(str);
 			}
-			flag=0;
+			txd_string("\n\r");
+			flag=9;
 		}
 		else if(flag==3) {
 			game_manual();
 			game_loading();
-			int over_flag=0, score=0, level=1; // init
+			int over_flag=0, is_ranker=0;
+			int score=0, level=1; // init
 			int user_pos;
+			// ranking variable
+			int pos_idx=0, alpha_idx=0; // Name : position, alphabet
+			char name[3]={'?','?','?'}; 
 			make_map();
 			while(1) {
 				char smg[16];
@@ -134,11 +139,20 @@ int main(void)
 				else if(SW==2) user_pos=2;
 				else user_pos=1;
 				
-				if(SW==4) { // end game
-					flag=0; SW=0; break;
+				/*
+				if(Cmd=='c') { // Restart Game
+					over_flag=0, score=0, is_ranker=0, level=0;
+					make_map();
 				}
+				if(Cmd=='e') { // Exit Game
+					flag=9; break;
+				}
+				// 랭킹 고침, 랭킹 업데이트 후 다시 게임 진행하는 현상 발생
+				// 게임 끝나면 restart, exit 메뉴 필요
+				// 아니면 게임메뉴를 만들어서 start, exit 리턴?
+				*/
 				
-				if(score==50 && level<6) {
+				if(!over_flag && score==50 && level<6) { // harder
 					level++;
 					if(level<=5) {
 						score=0, make_map();
@@ -150,7 +164,7 @@ int main(void)
 					}
 				}
 				
-				if(over_flag==1) { // game_over
+				if(over_flag && !is_ranker) { // game_over
 					if(score==50 && level==6) {
 						lcd_display_clear();
 						lcd_display_position(1,1);
@@ -158,25 +172,51 @@ int main(void)
 						lcd_display_position(2,1);
 						lcd_string("Score : 250");
 					}
-					else {
+					else if(!is_ranker) {
 						lcd_display_position(1,1);
 						lcd_string("Game Over");
 						lcd_display_position(2,1);
 						sprintf(smg,"Score : %d",score+50*(level-1));
 						lcd_string(smg);
 					}
-					update_rank(score+50*(level-1));
-					if(SW==4) { // exit
-						flag=0; SW=0; break;
-					}
-					else if(SW==3) { // restart
-						over_flag=0; score=0; level=1; user_pos=1; make_map();
-					}
-					else continue;
+					_delay_ms(1000);
+					if(!is_ranker && isRanker(score+50*(level-1))) is_ranker=1;
+					lcd_display_clear();
 				}
 				
-				lcd_display_clear();
+				if(over_flag==1 && is_ranker) { // Update Ranking
+					lcd_display_OnOff(1,1,1);
+					while(pos_idx<3) {
+						lcd_display_position(1,1);
+						lcd_string("Update Score");
+						lcd_display_position(2,1);
+						lcd_string(name);
+						if(SW==3) {
+							alpha_idx++;
+							if(alpha_idx>25) alpha_idx=0;
+							name[pos_idx]=alpha_idx+0x41;
+							SW=5;
+						}
+						else if(SW==4) {
+							alpha_idx--;
+							if(alpha_idx<0) alpha_idx=25;
+							name[pos_idx]=alpha_idx+0x41;
+							SW=5;
+						}
+						else if(SW==1) {
+							pos_idx++;
+							SW=5;
+						}
+						_delay_ms(100);
+					}
+					update_rank(score+50*(level-1),name);
+					lcd_display_OnOff(1,0,0);
+					ranking_display();
+				}
+
 				
+				// Play Game
+				lcd_display_clear();
 				for(int i=0;i<50;i++) {
 					if(ob[i].y<17 && ob[i].y>0) {
 						if(ob[i].y==1) {
@@ -192,7 +232,7 @@ int main(void)
 					lcd_string(">");
 				}
 				
-				// level & FND display
+				// delay & FND display
 				FND[0]=SEG[level];
 				FND[1]=SEG[(score+50*(level-1))/100];
 				FND[2]=SEG[((score+50*(level-1))/10)%10];
@@ -218,7 +258,6 @@ ISR(ADC_vect) {
 
 ISR(USART0_RX_vect) {
 	Cmd=UDR0;
-	Ncmd=UDR0;
 	if(Cmd=='u' || Cmd=='d' || Cmd=='s' || Cmd=='r') flag=0; // timer
 	else if(Cmd>='1' && Cmd<='4') flag=1; // fnd
 	else if(Cmd=='i') flag=2; // info

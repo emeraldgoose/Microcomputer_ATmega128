@@ -12,14 +12,15 @@ void txd(char ch);
 void txd_string(char *str);
 void manual();
 void FND_display();
-void bingle_bingle();
+void bingle_bingle(); // Effect
 void game_loading();
 void delay_level();
-void update_rank();
+int isRanker();
+void update_rank(int score, char *name);
 
 // global variable
 volatile int SW=0, flag=9;
-volatile unsigned char Cmd, Ncmd;
+volatile unsigned char Cmd;
 volatile int N_cnt=0, Interval=0;
 volatile int ADval[4]={0,0,0,0};
 volatile unsigned char SEG[16]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};
@@ -208,22 +209,14 @@ void ranking_display() {
 	txd_string("\n\r");
 }
 
-void update_rank(int score) { // hall of fame
-	char name[3];
+int isRanker(int score) {
 	for(int i=0;i<3;i++) {
-		if(score>honor_score[i]) {
-			lcd_display_position(1,1);
-			lcd_string("Update Score");
-			txd_string("Input Your Name\n\r");
-			int pos_idx=0;
-			while(pos_idx<4) {
-				txd(Ncmd);
-				name[pos_idx]=Ncmd;
-				pos_idx++;
-			}
-			break;
-		}
+		if(score>honor_score[i]) return 1;
 	}
+	return 0;
+}
+
+void update_rank(int score, char *name) { // hall of fame
 	if(score>honor_score[0]) {
 		honor_score[2]=honor_score[1]; for(int i=0;i<3;i++) honor_name[2][i]=honor_name[1][i];
 		honor_score[1]=honor_score[0]; for(int i=0;i<3;i++) honor_name[1][i]=honor_name[0][i];
