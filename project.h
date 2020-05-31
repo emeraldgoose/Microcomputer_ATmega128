@@ -15,10 +15,11 @@ void FND_display();
 void bingle_bingle();
 void game_loading();
 void delay_level();
+void update_rank();
 
 // global variable
 volatile int SW=0, flag=9;
-volatile unsigned char Cmd;
+volatile unsigned char Cmd, Ncmd;
 volatile int N_cnt=0, Interval=0;
 volatile int ADval[4]={0,0,0,0};
 volatile unsigned char SEG[16]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};
@@ -28,6 +29,8 @@ volatile unsigned char FND[4];
 struct _obstacle {
 	int x, y;	
 } ob[50];
+char honor_name[3][3]={{'?','?','?'},{'?','?','?'},{'?','?','?'}};
+int honor_score[3]={0,0,0};
 
 void init() {
 	DDRA=0xff;
@@ -126,14 +129,14 @@ void bingle_bingle() { // Effect
 		ld[i]=0xff;
 		lcd_display_position(1,1);
 		lcd_string(ld);
-		_delay_ms(80);
+		_delay_ms(70);
 	}
 	for(int i=0;i<16;i++) ld[i]=0x20;
 	for(int i=15;i>=0;i--) {
 		ld[i]=0xff;
 		lcd_display_position(2,1);
 		lcd_string(ld);
-		_delay_ms(80);
+		_delay_ms(70);
 	}
 	for(int i=0;i<8;i++) ld[i]=0x20;
 	for(int i=8;i<16;i++) ld[i]=0xff;
@@ -141,7 +144,7 @@ void bingle_bingle() { // Effect
 		ld[i]=0xff;
 		lcd_display_position(1,1);
 		lcd_string(ld);
-		_delay_ms(80);
+		_delay_ms(70);
 	}
 	lcd_display_clear();
 }
@@ -190,6 +193,47 @@ void delay_level(int level) {
 	}
 }
 
-void ranking() { // hall of fame
-	
+void ranking_display() {
+	char msg[16];
+	txd_string("\n\r");
+	txd_string("Game Ranking\n\r");
+	sprintf(msg,"1st. %c%c%c %d",honor_name[0][0],honor_name[0][1],honor_name[0][2],honor_score[0]);
+	txd_string(msg);
+	txd_string("\n\r");
+	sprintf(msg,"2nd. %c%c%c %d",honor_name[1][0],honor_name[1][1],honor_name[1][2],honor_score[1]);
+	txd_string(msg);
+	txd_string("\n\r");
+	sprintf(msg,"3rd. %c%c%c %d",honor_name[2][0],honor_name[2][1],honor_name[2][2],honor_score[2]);
+	txd_string(msg);
+	txd_string("\n\r");
+}
+
+void update_rank(int score) { // hall of fame
+	char name[3];
+	for(int i=0;i<3;i++) {
+		if(score>honor_score[i]) {
+			lcd_display_position(1,1);
+			lcd_string("Update Score");
+			txd_string("Input Your Name\n\r");
+			int pos_idx=0;
+			while(pos_idx<4) {
+				txd(Ncmd);
+				name[pos_idx]=Ncmd;
+				pos_idx++;
+			}
+			break;
+		}
+	}
+	if(score>honor_score[0]) {
+		honor_score[2]=honor_score[1]; for(int i=0;i<3;i++) honor_name[2][i]=honor_name[1][i];
+		honor_score[1]=honor_score[0]; for(int i=0;i<3;i++) honor_name[1][i]=honor_name[0][i];
+		honor_score[0]=score; for(int i=0;i<3;i++) honor_name[0][i]=name[i];
+	}
+	else if(score<honor_score[0] && score>honor_score[1]) {
+		honor_score[2]=honor_score[1]; for(int i=0;i<3;i++) honor_name[2][i]=honor_name[1][i];
+		honor_score[1]=score; for(int i=0;i<3;i++) honor_name[1][i]=name[i];
+	}
+	else if(score<honor_score[1] && score>honor_score[2]) {
+		honor_score[2]=score; for(int i=0;i<3;i++) honor_name[2][i]=name[i];
+	}
 }

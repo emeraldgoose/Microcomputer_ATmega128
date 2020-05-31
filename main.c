@@ -124,16 +124,18 @@ int main(void)
 		else if(flag==3) {
 			game_manual();
 			game_loading();
-			int death=0, score=0, level=1; // init
-			int user_pos, SW=1;
+			int over_flag=0, score=0, level=1; // init
+			int user_pos;
 			make_map();
 			while(1) {
 				char smg[16];
 				for(int i=0;i<50;i++) ob[i].y-=1;
-				user_pos=SW;
+				if(SW==1) user_pos=1;
+				else if(SW==2) user_pos=2;
+				else user_pos=1;
 				
 				if(SW==4) { // end game
-					flag=0; SW=1; break;
+					flag=0; SW=0; break;
 				}
 				
 				if(score==50 && level<6) {
@@ -147,26 +149,28 @@ int main(void)
 						_delay_ms(50);
 					}
 				}
-				else if(score==50 && level==6) {
-					lcd_display_clear();
-					lcd_display_position(1,1);
-					lcd_string("All Stage Clear");
-					lcd_display_position(2,1);
-					lcd_string("Score : 250");
-					if(SW==4) {
-						flag=0; SW=1; break;
-					}
-					else continue;
-				}
 				
-				if(death==1) {
-					lcd_display_position(1,1); lcd_string("Game Over");
-					lcd_display_position(2,1); sprintf(smg,"Score : %d",score+50*(level-1)); lcd_string(smg);
-					if(SW==4) {
-						flag=0; SW=1; break;
+				if(over_flag==1) { // game_over
+					if(score==50 && level==6) {
+						lcd_display_clear();
+						lcd_display_position(1,1);
+						lcd_string("All Stage Clear");
+						lcd_display_position(2,1);
+						lcd_string("Score : 250");
 					}
-					else if(SW==3) {
-						death=0; score=0; level=1; user_pos=1; make_map();
+					else {
+						lcd_display_position(1,1);
+						lcd_string("Game Over");
+						lcd_display_position(2,1);
+						sprintf(smg,"Score : %d",score+50*(level-1));
+						lcd_string(smg);
+					}
+					update_rank(score+50*(level-1));
+					if(SW==4) { // exit
+						flag=0; SW=0; break;
+					}
+					else if(SW==3) { // restart
+						over_flag=0; score=0; level=1; user_pos=1; make_map();
 					}
 					else continue;
 				}
@@ -177,7 +181,7 @@ int main(void)
 					if(ob[i].y<17 && ob[i].y>0) {
 						if(ob[i].y==1) {
 							if(ob[i].x==user_pos) {
-								death=1; break;
+								over_flag=1; break;
 							}
 							else score++;
 						}
@@ -214,6 +218,7 @@ ISR(ADC_vect) {
 
 ISR(USART0_RX_vect) {
 	Cmd=UDR0;
+	Ncmd=UDR0;
 	if(Cmd=='u' || Cmd=='d' || Cmd=='s' || Cmd=='r') flag=0; // timer
 	else if(Cmd>='1' && Cmd<='4') flag=1; // fnd
 	else if(Cmd=='i') flag=2; // info
