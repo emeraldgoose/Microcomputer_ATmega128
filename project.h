@@ -12,10 +12,12 @@ void txd(char ch);
 void txd_string(char *str);
 void manual();
 void FND_display();
+void main_menu();
 void bingle_bingle(); // Effect
 void game_loading();
+void game_menu();
 void delay_level();
-int isRanker();
+int isRanker(int score);
 void update_rank(int score, char *name);
 
 // global variable
@@ -104,6 +106,13 @@ void manual() {
 	txd_string("\n\r");
 }
 
+void main_menu() {
+	lcd_display_position(1,1);
+	lcd_string("Main Menu");
+	lcd_display_position(2,1);
+	lcd_string("Select Mode");
+}
+
 void FND_display() {
 	for(int i=0;i<100;i++) {
 		switch(i%4) {
@@ -168,6 +177,13 @@ void game_loading() {
 	lcd_display_clear();
 }
 
+void game_menu() {
+	lcd_display_position(1,1);
+	lcd_string("Car Racing");
+	lcd_display_position(2,1);
+	lcd_string("1) Start 2) Exit");
+}
+
 void make_map() {
 	ob[0].x=1; ob[0].y=17;
 	for(int i=1;i<50;i++) { // making map
@@ -230,3 +246,8 @@ void update_rank(int score, char *name) { // hall of fame
 		honor_score[2]=score; for(int i=0;i<3;i++) honor_name[2][i]=name[i];
 	}
 }
+
+/*
+ranking update 화면에서 쓰레기 문자 표시 버그
+타이머에서 다른 모드로 전환시 up, down의 경우 값 유지시켜야 함
+*/
