@@ -69,7 +69,9 @@ int main(void)
 			}
 			else {
 				lcd_display_position(1,1);
-				lcd_string(" : Timer");
+				lcd_string("Timer");
+				lcd_display_position(2,1);
+				lcd_string("Select display");
 			}
 		}
 		else if(flag==1) { // A/D Converter
@@ -119,7 +121,9 @@ int main(void)
 			}
 			else {
 				lcd_display_position(1,1);
-				lcd_string(" : A/D Converter");
+				lcd_string("A/D Converter");
+				lcd_display_position(2,1);
+				lcd_string("Select display");
 			}
 		}
 		else if(flag==2) {
