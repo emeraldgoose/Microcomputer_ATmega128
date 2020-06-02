@@ -147,7 +147,7 @@ int main(void)
 			int user_pos;
 			// ranking variable
 			int pos_idx=0, alpha_idx=0; // Name : position, alphabet
-			char name[3]={'?','?','?'};
+			char name[16]={'?','?','?'};
 			make_map();
 			
 			while(1) {
@@ -186,10 +186,11 @@ int main(void)
 						lcd_display_OnOff(1,1,1);
 						SW=0;
 						while(pos_idx<3) {
+							sprintf(smg,"Input Name : %c%c%c",name[0].name[1],name[2]);
 							lcd_display_position(1,1);
 							lcd_string("Update Score");
 							lcd_display_position(2,1);
-							lcd_string(name);
+							lcd_string(smg);
 							if(SW==3) {
 								alpha_idx++;
 								if(alpha_idx>25) alpha_idx=0;
