@@ -69,12 +69,16 @@ int main(void)
 			}
 			else {
 				lcd_display_position(1,1);
-				lcd_string(" : Timer");
+				lcd_string("Timer");
+				lcd_display_position(2,1);
+				lcd_string("Select display");
+				Interval=0;
 			}
 		}
 		else if(flag==1) { // A/D Converter
+			SW=0;
 			if(pCmd!=Cmd || pSW!=SW) lcd_display_clear(), pCmd=Cmd, pSW=SW;
-			
+			Interval=0;
 			int idx=Cmd-'1';
 			ADMUX=idx;
 			ADCSRA|=0x40;
@@ -119,7 +123,9 @@ int main(void)
 			}
 			else {
 				lcd_display_position(1,1);
-				lcd_string(" : A/D Converter");
+				lcd_string("A/D Converter");
+				lcd_display_position(2,1);
+				lcd_string("Select display");
 			}
 		}
 		else if(flag==2) {
@@ -134,9 +140,11 @@ int main(void)
 				txd_string(str);
 			}
 			txd_string("\n\r");
-			flag=9; SW=0;
+			flag=9; SW=0; // Exit Mode
 		}
 		else if(flag==3) {
+			Interval=0;
+			SW=0;
 			game_manual();
 			game_loading();
 			// initialize setting
@@ -144,19 +152,24 @@ int main(void)
 			PORTB=0x00;
 			int over_flag=0, is_ranker=0, is_start=0;
 			int score=0, level=1;
-			int user_pos;
+			int user_pos=1;
 			// ranking variable
 			int pos_idx=0, alpha_idx=0; // Name : position, alphabet
-			char name[3]={'?','?','?'};
-			make_map();
+			char name[3];
 			
 			while(1) {
 				if(!over_flag && !is_start) {
 					game_menu();
-					if(SW==1) is_start=1;
+					if(SW==1) {
+						over_flag=0, is_ranker=0, is_start=1;
+						score=0, level=1;
+						user_pos=1;
+						pos_idx=0, alpha_idx=0;
+						for(int i=0;i<3;i++) name[i]='?';
+						make_map();
+					}
 					else if(SW==2) {
 						flag=9, SW=0;
-						main_menu();
 						break;
 					}
 				}
@@ -186,21 +199,23 @@ int main(void)
 						lcd_display_OnOff(1,1,1);
 						SW=0;
 						while(pos_idx<3) {
+							lcd_display_position(2,1);
+							lcd_string("Input Name : ");
+							lcd_display_position(2,14);
+							lcd_string(name);
 							lcd_display_position(1,1);
 							lcd_string("Update Score");
-							lcd_display_position(2,1);
-							lcd_string(name);
 							if(SW==3) {
 								alpha_idx++;
 								if(alpha_idx>25) alpha_idx=0;
 								name[pos_idx]=alpha_idx+0x41;
-								SW=5;
+								SW=0;
 							}
 							else if(SW==4) {
 								alpha_idx--;
 								if(alpha_idx<0) alpha_idx=25;
 								name[pos_idx]=alpha_idx+0x41;
-								SW=5;
+								SW=0;
 							}
 							else if(SW==1) {
 								pos_idx++;
@@ -214,7 +229,7 @@ int main(void)
 					}
 					over_flag=0, is_ranker=0, is_start=0;
 				}
-				else {
+				else if(!over_flag && is_start) {
 					for(int i=0;i<50;i++) ob[i].y-=1;
 					if(SW==1) user_pos=1;
 					else if(SW==2) user_pos=2;
@@ -230,7 +245,7 @@ int main(void)
 							lcd_display_position(1,1);
 							sprintf(smg,"Stage %d",level);
 							lcd_string(smg);
-							_delay_ms(50);
+							_delay_ms(200);
 						}
 					}
 				

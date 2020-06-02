@@ -246,8 +246,3 @@ void update_rank(int score, char *name) { // hall of fame
 		honor_score[2]=score; for(int i=0;i<3;i++) honor_name[2][i]=name[i];
 	}
 }
-
-/*
-ranking update 화면에서 쓰레기 문자 표시 버그
-타이머에서 다른 모드로 전환시 up, down의 경우 값 유지시켜야 함
-*/
