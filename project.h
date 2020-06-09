@@ -6,12 +6,27 @@
 #include "tpk_lcd8m.h"
 #define VREF 5.0
 
+// global variable
+volatile int SW = 0, Mode = 9;
+volatile unsigned char Cmd;
+volatile int N_cnt = 0, Interval = 0;
+volatile int ADval[4] = {0, 0, 0, 0};
+volatile unsigned char SEG[16] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e};
+volatile unsigned char FND[4];
+
+// Game variable
+struct _obstacle {
+	int x, y;
+} ob[50];
+char honor_name[3][3] = {{'?', '?', '?'}, {'?', '?', '?'}, {'?', '?', '?'}};
+int honor_score[3] = {0, 0, 0};
+
 // function
 void init();
 void txd(char ch);
 void txd_string(char *str);
 void manual();
-void FND_display();
+void FND_display(int var);
 void main_menu();
 void bingle_bingle(); // Effect
 void game_loading();
@@ -20,41 +35,25 @@ void delay_level();
 int isRanker(int score);
 void update_rank(int score, char *name);
 
-// global variable
-volatile int SW=0, flag=9;
-volatile unsigned char Cmd;
-volatile int N_cnt=0, Interval=0;
-volatile int ADval[4]={0,0,0,0};
-volatile unsigned char SEG[16]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};
-volatile unsigned char FND[4];
-
-// Game variable
-struct _obstacle {
-	int x, y;	
-} ob[50];
-char honor_name[3][3]={{'?','?','?'},{'?','?','?'},{'?','?','?'}};
-int honor_score[3]={0,0,0};
-
 void init() {
-	DDRA=0xff;
-	DDRB=0x0f;
-	DDRC=0x70;
-	DDRD=0xff;
-	DDRE=0x00;
-	DDRF=0x00;
-	PORTB=0x00;
-	PORTE=0xf0;
+	// DDR & PORT
+	DDRA = 0xff;
+	DDRB = 0x0f;
+	DDRE = 0x00;
+	DDRF = 0x00;
+	PORTB = 0x00;
+	PORTE = 0xf0;
 	
 	// 0.1 second Timer
-	TCCR3A=0x00;
-	TCCR3B=0x0d;
-	TCCR3C=0x00;
+	TCCR3A = 0x00;
+	TCCR3B = 0x0d;
+	TCCR3C = 0x00;
 	
-	OCR3A=0x59f;
-	ETIMSK=0x10;
+	OCR3A = 0x59f;
+	ETIMSK = 0x10;
 	
-	EICRB=0xaa;
-	EIMSK=0xf0;
+	EICRB = 0xaa;
+	EIMSK = 0xf0;
 	
 	// Serial
 	UCSR0A = 0x00;
@@ -64,10 +63,23 @@ void init() {
 	UBRR0L = 0x5f; // fosc=14.7456MHz, BAUD=9600bps
 	
 	// ADC
-	ADCSRA=0xcf;
+	ADCSRA = 0xcf;
 	
 	sei();
 	_delay_ms(5);
+	
+	// LCD
+	lcd_init();
+	lcd_display_OnOff(1,0,0);
+	
+	manual();
+	
+	// holding message
+	Mode = 0;
+	lcd_display_position(1,1);
+	lcd_string("MicroComputer");
+	_delay_ms(1000);
+	Mode = 9;
 }
 
 void txd(char ch) {
@@ -78,7 +90,7 @@ void txd(char ch) {
 void txd_string(char *str) {
 	int i=0;
 	while(1) {
-		if(str[i]=='\0') break;
+		if(str[i] == '\0') break;
 		txd(str[i++]);
 	}
 }
@@ -106,15 +118,15 @@ void manual() {
 	txd_string("\n\r");
 }
 
-void main_menu() {
+void main_menu() { // 모드 변경 시 충돌 방지, Mode = 9
 	lcd_display_position(1,1);
 	lcd_string("Main Menu");
 	lcd_display_position(2,1);
 	lcd_string("Select Mode");
 }
 
-void FND_display() {
-	for(int i=0;i<100;i++) {
+void FND_display(int var) {
+	for(int i=0;i<var;i++) {
 		switch(i%4) {
 			case 3:
 			PORTB|=0x0f; PORTA=FND[0]; PORTB&=0xf7; break;
@@ -131,27 +143,27 @@ void FND_display() {
 }
 
 // Game Mode
-void bingle_bingle() { // Effect
+void bingle_bingle() { // LCD Effect
 	char ld[16];
-	for(int i=0;i<16;i++) ld[i]=0x20;
-	ld[8]=0xff;
+	for(int i=0;i<16;i++) ld[i] = 0x20;
+	ld[8] = 0xff;
 	for(int i=8;i<16;i++) {
-		ld[i]=0xff;
+		ld[i] = 0xff;
 		lcd_display_position(1,1);
 		lcd_string(ld);
 		_delay_ms(70);
 	}
-	for(int i=0;i<16;i++) ld[i]=0x20;
+	for(int i=0;i<16;i++) ld[i] = 0x20;
 	for(int i=15;i>=0;i--) {
-		ld[i]=0xff;
+		ld[i] = 0xff;
 		lcd_display_position(2,1);
 		lcd_string(ld);
 		_delay_ms(70);
 	}
-	for(int i=0;i<8;i++) ld[i]=0x20;
-	for(int i=8;i<16;i++) ld[i]=0xff;
+	for(int i=0;i<8;i++) ld[i] = 0x20;
+	for(int i=8;i<16;i++) ld[i] = 0xff;
 	for(int i=0;i<7;i++) {
-		ld[i]=0xff;
+		ld[i] = 0xff;
 		lcd_display_position(1,1);
 		lcd_string(ld);
 		_delay_ms(70);
@@ -160,6 +172,7 @@ void bingle_bingle() { // Effect
 }
 
 void game_manual() {
+	txd_string("\n\n\n\r");
 	txd_string("Game Command\n\r");
 	txd_string("SW 1 : UP\n\r");
 	txd_string("SW 2 : DOWN\n\r");
@@ -169,11 +182,13 @@ void game_manual() {
 
 void game_loading() {
 	bingle_bingle();
+	
 	lcd_display_position(1,1);
 	lcd_string("Mini Game");
 	lcd_display_position(2,1);
 	lcd_string("Car Racing");
 	_delay_ms(500);
+	
 	lcd_display_clear();
 }
 
@@ -184,32 +199,21 @@ void game_menu() {
 	lcd_string("1) Start 2) Exit");
 }
 
-void make_map() {
-	ob[0].x=1; ob[0].y=17;
-	for(int i=1;i<50;i++) { // making map
-		ob[i].x=rand()%2+1;
-		int dst=rand()%3+2;
-		ob[i].y=dst+ob[i-1].y;
+void make_map() { // Create map
+	srand(TCNT3);
+	ob[0].x = 1; ob[0].y = 17;
+	for(int i=1;i<50;i++) {
+		ob[i].x = rand()%2+1;
+		int dst = rand()%3+2;
+		ob[i].y = dst+ob[i-1].y;
 	}
 }
 
-void delay_level(int level) {
-	for(int i=0;i<(6-level)*100;i++)  {
-		switch(i%4) {
-			case 3:
-			PORTB|=0x0f; PORTA=FND[0]; PORTB&=0xf7; break;
-			case 2:
-			PORTB|=0x0f; PORTA=FND[1]; PORTB&=0xfb; break;
-			case 1:
-			PORTB|=0x0f; PORTA=FND[2]; PORTB&=0xfd; break;
-			case 0:
-			PORTB|=0x0f; PORTA=FND[3]; PORTB&=0xfe; break;
-			default: break;
-		}
-		_delay_ms(1);
-	}
+void delay_level(int level) { // delay & FND display
+	FND_display((6-level)*100);
 }
 
+// Ranking function
 void ranking_display() {
 	char msg[16];
 	txd_string("\n\r");
@@ -232,17 +236,26 @@ int isRanker(int score) {
 	return 0;
 }
 
-void update_rank(int score, char *name) { // hall of fame
+void update_rank(int score, char *name) {
 	if(score>honor_score[0]) {
-		honor_score[2]=honor_score[1]; for(int i=0;i<3;i++) honor_name[2][i]=honor_name[1][i];
-		honor_score[1]=honor_score[0]; for(int i=0;i<3;i++) honor_name[1][i]=honor_name[0][i];
-		honor_score[0]=score; for(int i=0;i<3;i++) honor_name[0][i]=name[i];
+		honor_score[2] = honor_score[1]; 
+		for(int i=0;i<3;i++) honor_name[2][i] = honor_name[1][i];
+		
+		honor_score[1] = honor_score[0]; 
+		for(int i=0;i<3;i++) honor_name[1][i] = honor_name[0][i];
+		
+		honor_score[0] = score; 
+		for(int i=0;i<3;i++) honor_name[0][i] = name[i];
 	}
 	else if(score<honor_score[0] && score>honor_score[1]) {
-		honor_score[2]=honor_score[1]; for(int i=0;i<3;i++) honor_name[2][i]=honor_name[1][i];
-		honor_score[1]=score; for(int i=0;i<3;i++) honor_name[1][i]=name[i];
+		honor_score[2] = honor_score[1];
+		for(int i=0;i<3;i++) honor_name[2][i] = honor_name[1][i];
+		
+		honor_score[1] = score;
+		for(int i=0;i<3;i++) honor_name[1][i] = name[i];
 	}
 	else if(score<honor_score[1] && score>honor_score[2]) {
-		honor_score[2]=score; for(int i=0;i<3;i++) honor_name[2][i]=name[i];
+		honor_score[2] = score;
+		for(int i=0;i<3;i++) honor_name[2][i] = name[i];
 	}
 }
