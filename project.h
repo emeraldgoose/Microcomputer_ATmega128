@@ -18,8 +18,8 @@ volatile unsigned char FND[4];
 struct _obstacle {
 	int x, y;
 } ob[50];
-char honor_name[3][3] = {{'?', '?', '?'}, {'?', '?', '?'}, {'?', '?', '?'}};
-int honor_score[3] = {0, 0, 0};
+char rank_name[3][3] = {{'?', '?', '?'}, {'?', '?', '?'}, {'?', '?', '?'}};
+int rank_score[3] = {0, 0, 0};
 
 // function
 void init();
@@ -218,44 +218,44 @@ void ranking_display() {
 	char msg[16];
 	txd_string("\n\r");
 	txd_string("Game Ranking\n\r");
-	sprintf(msg,"1st. %c%c%c %d",honor_name[0][0],honor_name[0][1],honor_name[0][2],honor_score[0]);
+	sprintf(msg,"1st. %c%c%c %d",rank_name[0][0],rank_name[0][1],rank_name[0][2],rank_score[0]);
 	txd_string(msg);
 	txd_string("\n\r");
-	sprintf(msg,"2nd. %c%c%c %d",honor_name[1][0],honor_name[1][1],honor_name[1][2],honor_score[1]);
+	sprintf(msg,"2nd. %c%c%c %d",rank_name[1][0],rank_name[1][1],rank_name[1][2],rank_score[1]);
 	txd_string(msg);
 	txd_string("\n\r");
-	sprintf(msg,"3rd. %c%c%c %d",honor_name[2][0],honor_name[2][1],honor_name[2][2],honor_score[2]);
+	sprintf(msg,"3rd. %c%c%c %d",rank_name[2][0],rank_name[2][1],rank_name[2][2],rank_score[2]);
 	txd_string(msg);
 	txd_string("\n\r");
 }
 
 int isRanker(int score) {
 	for(int i=0;i<3;i++) {
-		if(score>honor_score[i]) return 1;
+		if(score>rank_score[i]) return 1;
 	}
 	return 0;
 }
 
 void update_rank(int score, char *name) {
-	if(score>honor_score[0]) {
-		honor_score[2] = honor_score[1]; 
-		for(int i=0;i<3;i++) honor_name[2][i] = honor_name[1][i];
+	if(score>rank_score[0]) {
+		rank_score[2] = rank_score[1]; 
+		for(int i=0;i<3;i++) rank_name[2][i] = rank_name[1][i];
 		
-		honor_score[1] = honor_score[0]; 
-		for(int i=0;i<3;i++) honor_name[1][i] = honor_name[0][i];
+		rank_score[1] = rank_score[0]; 
+		for(int i=0;i<3;i++) rank_name[1][i] = rank_name[0][i];
 		
-		honor_score[0] = score; 
-		for(int i=0;i<3;i++) honor_name[0][i] = name[i];
+		rank_score[0] = score; 
+		for(int i=0;i<3;i++) rank_name[0][i] = name[i];
 	}
-	else if(score<honor_score[0] && score>honor_score[1]) {
-		honor_score[2] = honor_score[1];
-		for(int i=0;i<3;i++) honor_name[2][i] = honor_name[1][i];
+	else if(score<rank_score[0] && score>rank_score[1]) {
+		rank_score[2] = rank_score[1];
+		for(int i=0;i<3;i++) rank_name[2][i] = rank_name[1][i];
 		
-		honor_score[1] = score;
-		for(int i=0;i<3;i++) honor_name[1][i] = name[i];
+		rank_score[1] = score;
+		for(int i=0;i<3;i++) rank_name[1][i] = name[i];
 	}
-	else if(score<honor_score[1] && score>honor_score[2]) {
-		honor_score[2] = score;
-		for(int i=0;i<3;i++) honor_name[2][i] = name[i];
+	else if(score<rank_score[1] && score>rank_score[2]) {
+		rank_score[2] = score;
+		for(int i=0;i<3;i++) rank_name[2][i] = name[i];
 	}
 }
