@@ -3,6 +3,7 @@
 #include <util/delay.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tpk_lcd8m.h"
 #define VREF 5.0
 
@@ -72,8 +73,6 @@ void init() {
 	lcd_init();
 	lcd_display_OnOff(1,0,0);
 	
-	manual();
-	
 	// holding message
 	Mode = 0;
 	lcd_display_position(1,1);
@@ -114,14 +113,13 @@ void manual() {
 	txd_string("\n\r   SW3(INT6) : USART        SW4(INT7) : ALL");
 	txd_string("\n\r");
 	txd_string("\n\r   ---------- add-on --------------------");
-	txd_string("\n\r   'i' : Current info      'g' : Mini Game");
+	txd_string("\n\r   'i' : Current Value      'g' : Mini Game");
+	txd_string("\n\r   'c' : Screen Clear");
 	txd_string("\n\r");
 }
 
 void main_menu() { // 모드 변경 시 충돌 방지, Mode = 9
 	lcd_display_position(1,1);
-	lcd_string("Main Menu");
-	lcd_display_position(2,1);
 	lcd_string("Select Mode");
 }
 
@@ -176,7 +174,6 @@ void game_manual() {
 	txd_string("Game Command\n\r");
 	txd_string("SW 1 : UP\n\r");
 	txd_string("SW 2 : DOWN\n\r");
-	txd_string("SW 3 : Restart\n\r");
 	txd_string("SW 4 : END GAME\n\r");
 }
 
@@ -185,8 +182,6 @@ void game_loading() {
 	
 	lcd_display_position(1,1);
 	lcd_string("Mini Game");
-	lcd_display_position(2,1);
-	lcd_string("Car Racing");
 	_delay_ms(500);
 	
 	lcd_display_clear();

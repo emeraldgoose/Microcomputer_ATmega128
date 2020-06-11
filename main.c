@@ -7,11 +7,17 @@ int main(void)
 	float vin=0;
 	
 	init();
+	manual();
 	
 	while(1) {
 		if(Mode == 9) { // Main Menu
 			if(pCmd != Cmd) lcd_display_clear(), pCmd = Cmd;
 			main_menu();
+		}
+		else if(Mode == 4) { // Screen Clear
+			txd_string("\n\n\n\r");
+			manual();
+			Mode=9;
 		}
 		else if(Mode == 0) { // Timer
 			if(pCmd != Cmd || pSW != SW) lcd_display_clear(), pCmd = Cmd, pSW = SW;
@@ -19,15 +25,15 @@ int main(void)
 			// Counting
 			switch(Cmd) {
 				case 'u' :
-					sprintf(msg,"UP : %5.1f",(float)N_cnt/10.);
+					sprintf(msg,"UP    : %4.1f",(float)N_cnt/10.);
 					Interval = 1;
 					break;
 				case 's' :
-					sprintf(msg,"STOP : %4.1f",(float)N_cnt/10.);
+					sprintf(msg,"STOP  : %4.1f",(float)N_cnt/10.);
 					Interval = 0;
 					break;
 				case 'd' :
-					sprintf(msg,"DOWN : %4.1f",(float)N_cnt/10.);
+					sprintf(msg,"DOWN  : %4.1f",(float)N_cnt/10.);
 					Interval = -1;
 					break;
 				case 'r' :
@@ -68,7 +74,7 @@ int main(void)
 				txd_string(msg);
 			}
 			else if(SW == 4) { // ALL
-				PORTB = 0x00; // FND ON
+				PORTB = 0x00; // FND ONg
 				DDRA = 0xff;
 				
 				lcd_display_position(2,1);
@@ -84,11 +90,11 @@ int main(void)
 				lcd_string("Timer");
 				lcd_display_position(2,1);
 				lcd_string("Select display");
-				Interval = 0;
+				Interval = 0; // 타이머 정지
 			}
 		}
 		else if(Mode == 1) { // A/D Converter
-			Interval = 0; // 모드 전환 시 타이머 정지
+			Interval = 0; // 기능 전환 시 타이머 정지
 			if(pCmd != Cmd || pSW != SW) lcd_display_clear(), pCmd = Cmd, pSW = SW;
 			int idx = Cmd - '1'; // idx : 0 (ADC1), 1 (ADC2), 2 (ADC3), 3 (ADC4)
 			
@@ -148,19 +154,20 @@ int main(void)
 		}
 		else if(Mode == 2) {
 			// Title
-			txd_string("\n\rCurrent Value\n\r");
-			txd_string("\r");
-			
+			txd_string("\n\rCurrent_Value");
+
 			// Timer
-			sprintf(msg,"Timer : %4.1f",(float)N_cnt/10.);
+			txd_string("\n\rTimer : ");
+			sprintf(msg,"%4.1f",(float)N_cnt/10.);
 			txd_string(msg);
+			txd_string("\n\r");
 			
 			// ADC
 			for(int i=0;i<4;i++) {
 				float v = (float)ADval[i]*VREF/1023.0;
 				sprintf(msg,"ADC%d : %.2f[V]",i+1,v);
-				txd_string("   ");
 				txd_string(msg);
+				txd_string("\n\r");
 			}
 			
 			// Exit Mode
@@ -168,7 +175,7 @@ int main(void)
 			Mode = 9; SW = 0;
 		}
 		else if(Mode == 3) { // Game
-			Interval = 0; SW = 0;
+			Interval = 0; SW = 0; // 기능 전환 시 타이머 정지, 기존 입력 초기화
 			
 			game_manual();
 			game_loading();
@@ -198,6 +205,7 @@ int main(void)
 					}
 					else if(SW == 2) { // Exit
 						Mode = 9, SW = 0;
+						lcd_display_clear();
 						break;
 					}
 				}
@@ -237,7 +245,7 @@ int main(void)
 								alpha_idx++;
 								if(alpha_idx > 25) alpha_idx = 0;
 								name[pos_idx] = alpha_idx + 0x41;
-								SW = 0;
+								SW = 0; // 기존 입력 초기화
 							}
 							else if(SW == 4) { // alphabet-- (Z->A)
 								alpha_idx--;
@@ -256,7 +264,7 @@ int main(void)
 						lcd_display_OnOff(1,0,0);
 						ranking_display();
 					}
-					is_over = 0, is_ranker = 0, is_start = 0; // Go main menu
+					is_over = 0, is_ranker = 0, is_start = 0, SW=0; // Go main menu
 				}
 				else if(!is_over && is_start) {
 					
@@ -271,13 +279,17 @@ int main(void)
 					if(!is_over && score == 50 && level < 6) { // harder
 						level++;
 						if(level <= 5) {
-							char smg[16];
+							char str[15];
 							score = 0, make_map(); // 새로운 스테이지 시작 전에 맵, 점수 초기화 진행
 							lcd_display_clear();
 							lcd_display_position(1,1);
-							sprintf(smg,"Stage %d",level);
-							lcd_string(smg);
+							sprintf(str,"Stage %d",level);
+							lcd_string(str);
 							_delay_ms(200);
+						}
+						else { // All stage Clear
+							is_over=1;
+							continue;
 						}
 					}
 				
@@ -329,6 +341,7 @@ ISR(USART0_RX_vect) {
 	else if(Cmd >= '1' && Cmd <= '4') Mode = 1; // fnd
 	else if(Cmd == 'i') Mode = 2; // info
 	else if(Cmd == 'g') Mode = 3; // game
+	else if(Cmd == 'c') Mode = 4; // Clear
 }
 
 ISR(INT4_vect) {
