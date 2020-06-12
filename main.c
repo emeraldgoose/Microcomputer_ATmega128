@@ -8,7 +8,7 @@ int main(void)
 	
 	init();
 	manual();
-	
+
 	while(1) {
 		if(Mode == 9) { // Main Menu
 			if(pCmd != Cmd) lcd_display_clear(), pCmd = Cmd;
@@ -20,7 +20,11 @@ int main(void)
 			Mode=9;
 		}
 		else if(Mode == 0) { // Timer
-			if(pCmd != Cmd || pSW != SW) lcd_display_clear(), pCmd = Cmd, pSW = SW;
+			if(pCmd != Cmd || pSW != SW) {
+				if(SW==2 || SW==4) DDRA=0xff, PORTB=0x00; // 버튼에 따라서 FND 켜고 끄기
+				else DDRA=0x00;
+				lcd_display_clear(), pCmd = Cmd, pSW = SW;
+			}
 			
 			// Counting
 			switch(Cmd) {
@@ -49,41 +53,31 @@ int main(void)
 			FND[2] = SEG[(N_cnt/10)%10]&0x7f;
 			FND[3] = SEG[N_cnt%10];
 			
+			FND_display(100);
+			
 			if(SW == 1) { // LCD
-				DDRA = 0x00; // FND OFF
-				
 				lcd_display_position(2,1);
 				lcd_string(msg);
 				lcd_display_position(1,1);
 				lcd_string("LCD : Timer");
 			}
 			else if(SW == 2) { // FND
-				PORTB = 0x00; // FND ON
-				DDRA = 0xff;
-				
 				lcd_display_position(1,1);
 				lcd_string("FND : Timer");
-				FND_display(100);
 			}
 			else if(SW == 3) { // USART
-				DDRA = 0x00; // FND OFF
-				
 				lcd_display_position(1,1);
 				lcd_string("USART : Timer");
 				txd_string("\r");
 				txd_string(msg);
 			}
 			else if(SW == 4) { // ALL
-				PORTB = 0x00; // FND ONg
-				DDRA = 0xff;
-				
 				lcd_display_position(2,1);
 				lcd_string(msg);
-				FND_display(100);
-				txd_string("\r");
-				txd_string(msg);
 				lcd_display_position(1,1);
 				lcd_string("ALL : Timer");
+				txd_string("\r");
+				txd_string(msg);
 			}
 			else { // 기능만 선택하고 표시 방법을 선택하지 않았을 때 나타남. 기존 입력 때문에 생기는 충돌 방지
 				lcd_display_position(1,1);
@@ -95,7 +89,11 @@ int main(void)
 		}
 		else if(Mode == 1) { // A/D Converter
 			Interval = 0; // 기능 전환 시 타이머 정지
-			if(pCmd != Cmd || pSW != SW) lcd_display_clear(), pCmd = Cmd, pSW = SW;
+			if(pCmd != Cmd || pSW != SW) {
+				if(SW==2 || SW==4) DDRA=0xff, PORTB=0x00;
+				else DDRA=0x00;
+				lcd_display_clear(), pCmd = Cmd, pSW = SW;
+			}
 			int idx = Cmd - '1'; // idx : 0 (ADC1), 1 (ADC2), 2 (ADC3), 3 (ADC4)
 			
 			ADMUX = idx;
@@ -109,41 +107,32 @@ int main(void)
 			FND[2] = SEG[(int)(vin*10)%10];
 			FND[3] = SEG[(int)(vin*100)%10];
 			
-			if(SW == 1) { // LCD
-				DDRA = 0x00; // FND OFF
-				
+			FND_display(100);
+			
+			if(SW == 1) { // LCD	
 				lcd_display_position(2,1);
 				lcd_string(msg);
 				lcd_display_position(1,1);
 				lcd_string("LCD : A/D Conv.");
 			}
 			else if(SW == 2) { // FND
-				DDRA = 0xff; // FND ON
-				PORTB = 0x00;
-				
 				lcd_display_position(1,1);
 				lcd_string("FND : A/D Conv.");
-				FND_display(100);
+				
 			}
 			else if(SW == 3) { // USART
-				DDRA = 0x00; // FND OFF
-				
 				lcd_display_position(1,1);
 				lcd_string("USART : A/D Conv.");
 				txd_string("\r");
 				txd_string(msg);
 			}
 			else if(SW == 4) { // ALL
-				PORTB = 0x00; // FND ON
-				DDRA = 0xff;
-				
 				lcd_display_position(2,1);
 				lcd_string(msg);
-				FND_display(100);
-				txd_string("\r");
-				txd_string(msg);
 				lcd_display_position(1,1);
 				lcd_string("ALL : A/D Conv.");
+				txd_string("\r");
+				txd_string(msg);
 			}
 			else { // 기능 선택, 표시 미선택 때 나타남.
 				lcd_display_position(1,1);
