@@ -3,6 +3,8 @@
 - Name : TPK-128
 - Device : ATmega128
 - Clock setting : F_CPU = 14745600L
+## Tool
+- Atmel Studio 7.0
 ## Function
 - Timer
 - A/D Converter
